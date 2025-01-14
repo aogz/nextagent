@@ -1,0 +1,55 @@
+<div id="screenshots"></div>
+
+<script>
+    let mediaStream = null;
+
+    async function initializeMediaStream() {
+        try {
+            const displayMediaOptions = {
+                preferCurrentTab: true,
+            };
+            mediaStream = await navigator.mediaDevices.getDisplayMedia(displayMediaOptions);
+        } catch (err) {
+            console.error('Failed to initialize media stream:', err);
+        }
+    }
+
+    surflyExtension.runtime.onMessage.addListener((message, sender) => {
+        if (message.event_type === 'capture_screen') {
+            captureScreen().then(imageData => {
+                surflyExtension.runtime.sendMessage({event_type: 'screenshot', image_data: imageData});
+            });
+        } else if (message.event_type === 'add_screenshot') {
+            const screenshotElement = document.getElementById('screenshots');
+            const screenshot = document.createElement('div');
+            screenshot.innerHTML = `<img src="${message.image_data}" alt="Screenshot" width="640"><p>${JSON.stringify(message.response)}</p>`;
+            screenshotElement.appendChild(screenshot);
+        }
+    });
+
+    async function captureScreen() {
+        if (!mediaStream) {
+            // If stream was lost/stopped, try to reinitialize
+            await initializeMediaStream();
+            if (!mediaStream) {
+                throw new Error('Failed to initialize media stream');
+            }
+        }
+
+        const track = mediaStream.getVideoTracks()[0];
+        const imageCapture = new ImageCapture(track);
+        
+        try {
+            const bitmap = await imageCapture.grabFrame();
+            const canvas = document.createElement('canvas');
+            canvas.width = bitmap.width;
+            canvas.height = bitmap.height;
+            const context = canvas.getContext('2d');
+            context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+            return canvas.toDataURL('image/png');
+        } catch (err) {
+            mediaStream = null;
+            throw err;
+        }
+    }
+</script>
