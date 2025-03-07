@@ -14,10 +14,10 @@
         }
     }
 
-    surflyExtension.runtime.onMessage.addListener((message, sender) => {
+    chrome.runtime.onMessage.addListener((message, sender) => {
         if (message.event_type === 'capture_screen') {
             captureScreen().then(imageData => {
-                surflyExtension.runtime.sendMessage({event_type: 'screenshot', image_data: imageData});
+                chrome.runtime.sendMessage({event_type: 'screenshot', image_data: imageData});
             });
         } else if (message.event_type === 'add_screenshot') {
             const screenshotElement = document.getElementById('screenshots');

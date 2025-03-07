@@ -13,5 +13,12 @@
         {
             "js": ["hints.js", "content.js"]
         }
+    ],
+    "env": [
+        {
+            "key": "OPENAI_API_KEY",
+            "value": "",
+            "description": "OpenAI API key"
+        }
     ]
 }

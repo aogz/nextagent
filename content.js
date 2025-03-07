@@ -43,17 +43,17 @@ addEventListener("DOMContentLoaded", (event) => {
             }, message.time);
         },
         finish: (message) => {
-            surflyExtension.surflySession.apiRequest({cmd: 'send_chat_message', message: `✨ Agent: Finished`});
+            chrome.virtualSession.apiRequest({cmd: 'send_chat_message', message: `✨ Agent: Finished`});
         },
         ask: (message) => {
-            surflyExtension.surflySession.apiRequest({cmd: 'send_chat_message', message: `✨ Agent: Question: ${message.question}`});
+            chrome.virtualSession.apiRequest({cmd: 'send_chat_message', message: `✨ Agent: Question: ${message.question}`});
         },
         hints: (message) => {
             activateHintMode();
         },
     };
 
-    surflyExtension.runtime.onMessage.addListener((message, sender) => {
+    chrome.runtime.onMessage.addListener((message, sender) => {
         if (message?.command in handlers) {
             try {
                 handlers[message.command](message);
@@ -65,5 +65,5 @@ addEventListener("DOMContentLoaded", (event) => {
         }
     });
 
-    surflyExtension.surflySession.apiRequest({cmd: 'send_chat_message', message: `✨ Agent: Hello! Type /help to see available commands.`});
+    chrome.virtualSession.apiRequest({cmd: 'send_chat_message', message: `✨ Agent: Hello! Type /help to see available commands.`});
 });

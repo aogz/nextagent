@@ -480,7 +480,7 @@ function activateHintMode() {
             // memory usage.
             state.removeRefreshHintsEventListeners = null;
         };
-    surflyExtension.surflySession.apiRequest({cmd: 'send_chat_message', message: `✨ Agent: Activating hints mode..`});
+    chrome.virtualSession.apiRequest({cmd: 'send_chat_message', message: `✨ Agent: Activating hints mode..`});
 }
 
 function deactivateHintMode() {

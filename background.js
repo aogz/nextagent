@@ -2,7 +2,7 @@ let prompt = '';
 let autoNext = false;
 let sendScreenshots = false;
 
-const openAIToken = ""
+const openAIToken = chrome.virtualSession.env.OPENAI_API_KEY;
 const systemPrompt = `
     You are a web browsing assistant named “GERTY” that converses with the user in natural language to determine their intent and then translates this into commands that are executed in the browser to achieve the user’s desired outcome. If the user asks who you are, respond with, "I am GERTY, your web browsing assistant. What would you like to do?" The user is unable to use the browser directly. Their only means of interacting with websites or accomplishing something on the internet is by telling you what they want and by you determining the appropriate sequence commands to be executed in the browser in order to accomplish it. The sequence of commands should reflect the steps that the user would naturally take in their browser to accomplish their objective if they were able to do so.
 
@@ -146,7 +146,7 @@ class OpenAIChatAssistant {
 }
 const openAIChatAssistant = new OpenAIChatAssistant();
 
-surflyExtension.surflySession.onMessage.addListener(message => {
+chrome.virtualSession.onMessage.addListener(message => {
     console.log('[background.js] message received: ', message);
     if (message.event_type === 'chat_message') {
         if (message.message[0] === '/') {
@@ -167,7 +167,7 @@ surflyExtension.surflySession.onMessage.addListener(message => {
                     break;
                 case 'hints':
                 case 'h':
-                    surflyExtension.tabs.sendMessage(null, {event_type: 'command', command: 'hints'});
+                    chrome.tabs.sendMessage(null, {event_type: 'command', command: 'hints'});
                     break;
                 case 'auto':
                 case 'a':
@@ -182,7 +182,7 @@ surflyExtension.surflySession.onMessage.addListener(message => {
                     break;
                 case 'help':
                 case 'h':
-                    surflyExtension.surflySession.apiRequest({cmd: 'send_chat_message', message: `✨ Agent: Available commands: /start <prompt>, /next, /hints, /auto <on|off>, /screenshots <on|off>, /help`});
+                    chrome.virtualSession.apiRequest({cmd: 'send_chat_message', message: `✨ Agent: Available commands: /start <prompt>, /next, /hints, /auto <on|off>, /screenshots <on|off>, /help`});
                     break;
             }
 
@@ -192,19 +192,19 @@ surflyExtension.surflySession.onMessage.addListener(message => {
 });
 
 function next() {
-    surflyExtension.surflySession.apiRequest({cmd: 'send_chat_message', message: `✨ Agent: Looking at the webpage..`});
-    surflyExtension.runtime.sendMessage({event_type: 'capture_screen', sendScreenshots});
+    chrome.virtualSession.apiRequest({cmd: 'send_chat_message', message: `✨ Agent: Looking at the webpage..`});
+    chrome.runtime.sendMessage({event_type: 'capture_screen', sendScreenshots});
 }
 
 function nextAction(prompt, imageData) {
-    surflyExtension.surflySession.apiRequest({cmd: 'send_chat_message', message: `✨ Agent: Deciding what to do next..`});
+    chrome.virtualSession.apiRequest({cmd: 'send_chat_message', message: `✨ Agent: Deciding what to do next..`});
     openAIChatAssistant.sendMessageAndGetInstruction(prompt, imageData).then(response => {
-        surflyExtension.surflySession.apiRequest({cmd: 'send_chat_message', message: `✨ Agent: ${response.explanation}`});
-        surflyExtension.tabs.sendMessage(null, {event_type: 'command', ...response});
+        chrome.virtualSession.apiRequest({cmd: 'send_chat_message', message: `✨ Agent: ${response.explanation}`});
+        chrome.tabs.sendMessage(null, {event_type: 'command', ...response});
 
         if (sendScreenshots) {
-            surflyExtension.surflySession.apiRequest({cmd: 'send_chat_message', message: `✨ Agent: Adding screenshot to the popup..`});    
-            surflyExtension.runtime.sendMessage({event_type: 'add_screenshot', image_data: imageData, response});
+            chrome.virtualSession.apiRequest({cmd: 'send_chat_message', message: `✨ Agent: Adding screenshot to the popup..`});    
+            chrome.runtime.sendMessage({event_type: 'add_screenshot', image_data: imageData, response});
         }
 
         if (autoNext) {
@@ -215,7 +215,7 @@ function nextAction(prompt, imageData) {
     });
 }
 
-surflyExtension.runtime.onMessage.addListener((message, sender) => {
+chrome.runtime.onMessage.addListener((message, sender) => {
     console.log('[background.js] message received: ', message);
     if (message.event_type === 'screenshot') {
         const imageData = message.image_data;
